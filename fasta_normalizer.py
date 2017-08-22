@@ -1,6 +1,5 @@
 from Bio import SeqIO
 
-
 def fasta_normalizer(file, desired_len):
     fasta_dict = SeqIO.to_dict(SeqIO.parse(file, "fasta"))
     fasta_dict_corrected = {}
