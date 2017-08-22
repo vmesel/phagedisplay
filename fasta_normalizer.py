@@ -1,4 +1,10 @@
 from Bio import SeqIO
+import argparse
+
+parser = argparse.ArgumentParser(description='Fasta line length normalizer')
+
+parser.add_argument('-f','--file', dest='fasta_file')
+parser.add_argument('-l','--length', dest='fasta_line_length')
 
 def fasta_normalizer(file, desired_len):
     fasta_dict = SeqIO.to_dict(SeqIO.parse(file, "fasta"))
@@ -8,22 +14,15 @@ def fasta_normalizer(file, desired_len):
         fasta_dict_corrected[seq_name] = []
         intermediate = str(v.seq)
         while True:
-            fasta_dict_corrected[seq_name].append(intermediate[:desired_len])
-            intermediate = intermediate[desired_len:]
+            fasta_dict_corrected[seq_name].append(intermediate[:int(desired_len)])
+            intermediate = intermediate[int(desired_len):]
             if intermediate == "":
                 break
+
     for k, v in fasta_dict_corrected.items():
-        if len(fasta_dict_corrected[k]) >= 2:
-            complete_seq = fasta_dict_corrected[k][-2]
-            incomplete_seq = fasta_dict_corrected[k][-1]
-            left_to_complete = desired_len - len(incomplete_seq)
-            completed_seq = complete_seq[-desired_len:] + incomplete_seq
-            fasta_dict_corrected[k][-1] = completed_seq
-
-    # for k, v in fasta_dict_corrected.items():
+        print ">" + k
+        print "\n".join(v) + "\n"
 
 
-    return fasta_dict_corrected
-
-a = fasta_normalizer("/Users/vmesel/GitHub/phagedisplay/Schisto.mRNA.Smp_and_product_name.2017.08.18.20.15.59.fasta", 135)
-print(a)
+args = parser.parse_args()
+fasta_normalizer(args.fasta_file, args.fasta_line_length)
