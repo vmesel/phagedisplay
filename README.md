@@ -5,8 +5,9 @@ Para o desenvolvimento de um pipeline de sequências das sequencias a serem util
 O pipeline inteiro é:
 ```bash
 pyfasta split -n 1 -k 156 -o 21 FASTAFILE.fasta
-python phagedisplay/fasta_normalizer.py -f FASTAFILE_OUTPUT_FROM_PYFASTA_HERE.fasta -l 156 -o 21 -of FASTAFILE-OUTPUTNAME_HERE.fasta
-
+python phagedisplay/fasta_normalizer.py -n -f FASTAFILE_OUTPUT_FROM_PYFASTA_HERE.fasta -l 156 -o 21 -of FASTAFILE-OUTPUTNAME_HERE.fasta
+python phagedisplay/fasta_normalizer.py -c -f FASTAFILE-OUTPUTNAME_HERE.fasta -of FASTAFILE-OUTPUTNAME_HERE.fasta.clean
+python phagedisplay/fasta_normalizer.py -p -f FASTAFILE-OUTPUTNAME_HERE.fasta.clean -of FASTAFILE-OUTPUTNAME_HERE.fasta.pep
 ```
 
 ## fasta_normalizer.py
@@ -15,7 +16,7 @@ Para utilizar o fasta_normalizer.py na linha de comando, você deve passar os se
 
 ```
 Você deve escolher uma ação que deve ser falada no inicio do comando
--n ou --fasta_normalizer - Para normalizar o fasta e
+-n ou --fasta_normalizer - Para normalizar o fasta para o mesmo tamanho de sequencias
 -p ou --peptide-fasta - Transformar um fasta de DNA para Peptídeos
 -c ou --fasta-cleaner - Para realizar a limpeza do fasta (remoção das sequências com alfabeto estranho)
 
