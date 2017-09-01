@@ -1,6 +1,8 @@
+import argparse
+
 from Bio import SeqIO, Seq
 from Bio.Alphabet import generic_dna
-import argparse
+from Bio.Data.CodonTable import TranslationError
 
 parser = argparse.ArgumentParser(description='Fasta line length normalizer')
 
@@ -36,43 +38,47 @@ def fasta2dict(fasta_file):
     fasta_sequences = [fasta_list[i] for i in range(1, len(fasta_list), 2)]
 
     for k, v in zip(fasta_seq_names, fasta_sequences):
-        if k in fasta_dict:
-            fasta_dict[k].append(v)
+        splited_seq_name = k.split("|")
+        seq_name = splited_seq_name[0]
+        seq_pos = splited_seq_name[1]
+        if seq_name in fasta_dict:
+            fasta_dict[seq_name].append((seq_pos, v))
         else:
-
-            fasta_dict[k] = []
-            fasta_dict[k].append(v)
+            fasta_dict[seq_name] = []
+            fasta_dict[seq_name].append((seq_pos, v))
 
     return fasta_dict
 
+def dict2fasta(fasta_cleaned, output_fasta=None):
+    fasta_list = []
+    for k, v in fasta_cleaned.items():
+        for ind, seq in v:
+            fasta_list.append(">{}|{}\n{}\n".format(k, ind, seq))
+
+    if output_fasta != None:
+        with open(output_fasta, "w+") as f:
+            f.write("\n".join(fasta_list))
+    else:
+        print("\n".join(fasta_list))
 
 def fasta_normalizer(file, desired_len, overlap_len, output_file = None):
-    fasta_dict = SeqIO.to_dict(SeqIO.parse(file, "fasta"))
-    fasta_dict_corrected = {}
-    for k, v in fasta_dict.items():
-        seq_name = k.split("|")[0]
-        # import ipdb; ipdb.set_trace()
-        if seq_name in fasta_dict_corrected:
-            fasta_dict_corrected[seq_name].append(str(v.seq))
-        else:
-            fasta_dict_corrected[seq_name] = []
-            fasta_dict_corrected[seq_name].append(str(v.seq))
+    fasta_dict = fasta2dict(file)
 
-    for k, v in fasta_dict_corrected.items():
+    for k, v in fasta_dict.items():
         if len(v) > 1:
-            seq_complete = v[-2]
-            seq_incomplete = v[-1]
+            seq_complete = v[-2][1]
+            seq_incomplete = v[-1][1]
 
             if len(seq_incomplete) >= int(overlap_len):
                 if len(seq_incomplete) < int(desired_len):
                     missing_len = int(desired_len) - len(seq_incomplete)
-                    v[-1] = seq_complete[missing_len:] + seq_complete
+                    v[-1] = (v[-1][0], seq_complete[missing_len:] + seq_complete)
 
     fasta_file_output = []
-    for k, v in fasta_dict_corrected.items():
-        for seq in v:
+    for k, v in fasta_dict.items():
+        for ind, seq in v:
             if len(seq) == int(desired_len):
-                fasta_file_output.append(">{}\n{}\n".format(k, seq))
+                fasta_file_output.append(">{}|{}\n{}\n".format(k, ind, seq))
 
     if output_file != None:
         with open(output_file, "w+") as f:
@@ -87,48 +93,26 @@ def fasta_cleaner(input_fasta, output_fasta=None):
 
     for k, v in fasta_dict.items():
         for n, item in enumerate(v):
-            if "n" not in item:
+            if "n" not in item[-1]:
                 if k in fasta_cleaned:
                     fasta_cleaned[k].append(item)
                 else:
                     fasta_cleaned[k] = []
                     fasta_cleaned[k].append(item)
 
-    fasta_list = []
-
-    for k, v in fasta_cleaned.items():
-        for seq in v:
-            fasta_list.append(">{}\n{}\n".format(k, seq))
-
-    if output_fasta != None:
-        with open(output_fasta, "w+") as f:
-            f.write("\n".join(fasta_list))
-    else:
-        print("\n".join(fasta_list))
-
+    dict2fasta(fasta_cleaned)
 
 def pep_fasta(input_fasta, output_fasta=None):
     fasta_dict = fasta2dict(input_fasta)
-    fasta_dict_bkp = fasta2dict(input_fasta)
+    fasta_dict_bkp = {}
     for k, v in fasta_dict.items():
         # import ipdb; ipdb.set_trace()
         try:
-            fasta_dict[k] = [Seq.Seq(x, generic_dna).translate() for x in v]
+            fasta_dict_bkp[k] = [(ind, Seq.Seq(x, generic_dna).translate()) for ind, x in v]
         except:
             pass
 
-    fasta_list = []
-
-    for k, v in fasta_dict.items():
-        for seq in v:
-            fasta_list.append(">{}\n{}\n".format(k, seq))
-
-    if output_fasta != None:
-        with open(output_fasta, "w+") as f:
-            f.write("\n".join(fasta_list))
-    else:
-        print("\n".join(fasta_list))
-
+    dict2fasta(fasta_dict_bkp, output_fasta)
 
 if __name__ == '__main__':
     args = parser.parse_args()
