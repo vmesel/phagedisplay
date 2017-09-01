@@ -12,6 +12,7 @@ python phagedisplay/fasta_normalizer.py -c -f FASTAFILE-OUTPUTNAME_HERE.fasta -o
 python phagedisplay/fasta_normalizer.py -p -f FASTAFILE-OUTPUTNAME_HERE.fasta.clean -of FASTAFILE-OUTPUTNAME_HERE.fasta.pep
 makeblastdb -in FASTAFILE-OUTPUTNAME_HERE.fasta.pep -dbtype prot
 blastp -task blastp -db FASTAFILE-OUTPUTNAME_HERE.fasta.pep -query FASTAFILE-OUTPUTNAME_HERE.fasta.pep -outfmt 6 -qcov_hsp_perc 100 -out blast-peptide.blast
+awk '{if ($3 == 100) print $0}' blast-peptide.blast > blastOUT-filtered100id.blast
 ```
 
 ## fasta_normalizer.py
