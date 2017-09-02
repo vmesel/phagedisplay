@@ -5,8 +5,8 @@ Para o desenvolvimento de um pipeline de sequências das sequencias a serem util
 O pipeline inteiro é:
 ```bash
 sed "s/|.*//" ORIGINAL-FASTAFILE.FASTA > PRE_FASTAFILE.fasta
-sed "s/\([0-9]\)_\(-\?[0-9]\)/\1\|\2/g" PRE_FASTAFILE.fasta > FASTAFILE.fasta
 pyfasta split -n 1 -k 156 -o 21 FASTAFILE.fasta
+sed "s/\([0-9]\)_\(-\?[0-9]\)/\1\|\2/g" PRE_FASTAFILE.fasta > FASTAFILE.fasta
 python phagedisplay/fasta_normalizer.py -n -f FASTAFILE_OUTPUT_FROM_PYFASTA_HERE.fasta -l 156 -o 21 -of FASTAFILE-OUTPUTNAME_HERE.fasta
 python phagedisplay/fasta_normalizer.py -c -f FASTAFILE-OUTPUTNAME_HERE.fasta -of FASTAFILE-OUTPUTNAME_HERE.fasta.clean
 python phagedisplay/fasta_normalizer.py -p -f FASTAFILE-OUTPUTNAME_HERE.fasta.clean -of FASTAFILE-OUTPUTNAME_HERE.fasta.pep

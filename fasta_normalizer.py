@@ -49,6 +49,7 @@ def fasta2dict(fasta_file):
 
     return fasta_dict
 
+
 def dict2fasta(fasta_cleaned, output_fasta=None):
     fasta_list = []
     for k, v in fasta_cleaned.items():
@@ -61,21 +62,30 @@ def dict2fasta(fasta_cleaned, output_fasta=None):
     else:
         print("\n".join(fasta_list))
 
+
+def list_normalizer(list, overlap_len, desired_len):
+    if len(list) > 1:
+        normalized_list = [x for x in list[:-2]]
+        seq_complete = list[-2][1]
+        seq_incomplete = list[-1][1]
+
+        if len(seq_incomplete) >= int(overlap_len):
+            if len(seq_incomplete) < int(desired_len):
+                missing_len = int(desired_len) - len(seq_incomplete) + 21
+                normalized_list.append((list[-2][0], list[-2][1]))
+                seq_incomplete = seq_complete[-missing_len:-21] + seq_incomplete
+                normalized_list.append((list[-1][0], seq_incomplete))
+        return normalized_list
+    return list
+
+
 def fasta_normalizer(file, desired_len, overlap_len, output_file = None):
     fasta_dict = fasta2dict(file)
 
-    for k, v in fasta_dict.items():
-        if len(v) > 1:
-            seq_complete = v[-2][1]
-            seq_incomplete = v[-1][1]
-
-            if len(seq_incomplete) >= int(overlap_len):
-                if len(seq_incomplete) < int(desired_len):
-                    missing_len = int(desired_len) - len(seq_incomplete)
-                    v[-1] = (v[-1][0], seq_complete[missing_len:] + seq_complete)
+    new_fasta = {k: list_normalizer(v, overlap_len=overlap_len, desired_len=desired_len) for k, v in fasta_dict.items()}
 
     fasta_file_output = []
-    for k, v in fasta_dict.items():
+    for k, v in new_fasta.items():
         for ind, seq in v:
             if len(seq) == int(desired_len):
                 fasta_file_output.append(">{}|{}\n{}\n".format(k, ind, seq))
@@ -106,7 +116,6 @@ def pep_fasta(input_fasta, output_fasta=None):
     fasta_dict = fasta2dict(input_fasta)
     fasta_dict_bkp = {}
     for k, v in fasta_dict.items():
-        # import ipdb; ipdb.set_trace()
         try:
             fasta_dict_bkp[k] = [(ind, Seq.Seq(x, generic_dna).translate()) for ind, x in v]
         except:
