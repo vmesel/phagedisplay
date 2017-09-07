@@ -30,6 +30,14 @@ parser.add_argument('-o','--overlap',
 parser.add_argument('-of','--output_file',
                     dest='output_file'
 )
+parser.add_argument('-w','--wrong-bases',
+                    dest='wrong_bases'
+)
+parser.add_argument('-ol','--one-liner',
+                    dest='one_liner',
+                    action="store_true"
+)
+
 
 def fasta2dict(fasta_file):
     fasta_list = [line.strip() for line in open(fasta_file) if line.strip() != ""]
@@ -53,14 +61,26 @@ def fasta2dict(fasta_file):
 def dict2fasta(fasta_cleaned, output_fasta=None):
     fasta_list = []
     for k, v in fasta_cleaned.items():
-        for ind, seq in v:
-            fasta_list.append(">{}|{}\n{}\n".format(k, ind, seq))
+        try:
+            for ind, seq in v:
+                fasta_list.append(">{}|{}\n{}\n".format(k, ind, seq))
+        except:
+            fasta_list.append(">{}\n{}\n".format(k, v))
 
     if output_fasta != None:
         with open(output_fasta, "w+") as f:
             f.write("\n".join(fasta_list))
     else:
         print("\n".join(fasta_list))
+
+
+def fasta_one_liner(fasta, output_fasta=None):
+    fasta = SeqIO.to_dict(SeqIO.parse(fasta, format="fasta"))
+    one_liner_fasta = {}
+    for k, v in fasta.items():
+        # import ipdb; ipdb.set_trace()
+        one_liner_fasta[k] = str(v.seq)
+    dict2fasta(one_liner_fasta, output_fasta)
 
 
 def list_normalizer(list, overlap_len, desired_len):
@@ -71,10 +91,10 @@ def list_normalizer(list, overlap_len, desired_len):
 
         if len(seq_incomplete) >= int(overlap_len):
             if len(seq_incomplete) < int(desired_len):
-                missing_len = int(desired_len) - len(seq_incomplete) + 21
+                missing_len = int(desired_len) - len(seq_incomplete)
                 normalized_list.append((list[-2][0], list[-2][1]))
-                seq_incomplete = seq_complete[-missing_len:-21] + seq_incomplete
-                normalized_list.append((list[-1][0], seq_incomplete))
+                seq_incomplete = seq_complete[-missing_len:-int(overlap_len)] + seq_incomplete
+                normalized_list.append((int(list[-2][0]) + missing_len, seq_incomplete))
         return normalized_list
     return list
 
@@ -97,13 +117,13 @@ def fasta_normalizer(file, desired_len, overlap_len, output_file = None):
         print("\n".join(fasta_file_output))
 
 
-def fasta_cleaner(input_fasta, output_fasta=None):
+def fasta_cleaner(input_fasta, output_fasta=None, wrong_bases="n"):
     fasta_dict = fasta2dict(input_fasta)
     fasta_cleaned = {}
 
     for k, v in fasta_dict.items():
         for n, item in enumerate(v):
-            if "n" not in item[-1]:
+            if wrong_bases not in item[-1]:
                 if k in fasta_cleaned:
                     fasta_cleaned[k].append(item)
                 else:
@@ -111,6 +131,7 @@ def fasta_cleaner(input_fasta, output_fasta=None):
                     fasta_cleaned[k].append(item)
 
     dict2fasta(fasta_cleaned)
+
 
 def pep_fasta(input_fasta, output_fasta=None):
     fasta_dict = fasta2dict(input_fasta)
@@ -123,21 +144,31 @@ def pep_fasta(input_fasta, output_fasta=None):
 
     dict2fasta(fasta_dict_bkp, output_fasta)
 
+
 if __name__ == '__main__':
     args = parser.parse_args()
     if args.fasta_normalizer:
-        fasta_normalizer(args.fasta_file,
-        args.fasta_line_length,
-        args.fasta_sequences_overlap,
-        args.output_file
-)
+        fasta_normalizer(
+            args.fasta_file,
+            args.fasta_line_length,
+            args.fasta_sequences_overlap,
+            args.output_file
+        )
 
     if args.fasta_cleaner:
         fasta_cleaner(args.fasta_file,
-            args.output_file
-)
+            args.output_file,
+            args.wrong_bases
+        )
 
     if args.peptide_fasta:
-        pep_fasta(args.fasta_file,
+        pep_fasta(
+            args.fasta_file,
             args.output_file
-)
+        )
+
+    if args.one_liner:
+        fasta_one_liner(
+            args.fasta_file,
+            args.output_file
+        )
