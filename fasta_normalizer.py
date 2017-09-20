@@ -3,6 +3,7 @@ import argparse
 from Bio import SeqIO, Seq
 from Bio.Alphabet import generic_dna
 from Bio.Data.CodonTable import TranslationError
+from pprint import pprint
 
 parser = argparse.ArgumentParser(description='Fasta line length normalizer')
 
@@ -50,10 +51,13 @@ def fasta2dict(fasta_file):
         seq_name = splited_seq_name[0]
         seq_pos = splited_seq_name[1]
         if seq_name in fasta_dict:
-            fasta_dict[seq_name].append((seq_pos, v))
+            fasta_dict[seq_name].append((int(seq_pos), v))
         else:
             fasta_dict[seq_name] = []
-            fasta_dict[seq_name].append((seq_pos, v))
+            fasta_dict[seq_name].append((int(seq_pos), v))
+
+    for k in fasta_dict.keys():
+        fasta_dict[k] = sorted(fasta_dict[k])
 
     return fasta_dict
 
@@ -83,25 +87,35 @@ def fasta_one_liner(fasta, output_fasta=None):
     dict2fasta(one_liner_fasta, output_fasta)
 
 
+def seq_name_norm(fasta_to_clean, output_fasta=None):
+    import re
+    from collections import OrderedDict
+    fasta = SeqIO.to_dict(SeqIO.parse(fasta_to_clean, format="fasta"))
+    fasta_clean = {}
+
+    for k, v in fasta.items():
+        k_n = re.sub(r"([0-9])_([0-9])", r"\1|\2", k)
+        fasta_clean[k_n] = str(v.seq)
+
+    dict2fasta(fasta_clean, output_fasta)
+
 def list_normalizer(list, overlap_len, desired_len):
     if len(list) > 1:
         normalized_list = [x for x in list[:-2]]
         seq_complete = list[-2][1]
         seq_incomplete = list[-1][1]
-
         if len(seq_incomplete) >= int(overlap_len):
             if len(seq_incomplete) < int(desired_len):
                 missing_len = int(desired_len) - len(seq_incomplete)
                 normalized_list.append((list[-2][0], list[-2][1]))
-                seq_incomplete = seq_complete[-missing_len:-int(overlap_len)] + seq_incomplete
-                normalized_list.append((int(list[-2][0]) + missing_len, seq_incomplete))
+                seq_incomplete = seq_complete[-missing_len - overlap_len:-int(overlap_len)] + seq_incomplete
+                normalized_list.append((int(list[-1][0]) + missing_len, seq_incomplete))
         return normalized_list
     return list
 
 
 def fasta_normalizer(file, desired_len, overlap_len, output_file = None):
     fasta_dict = fasta2dict(file)
-
     new_fasta = {k: list_normalizer(v, overlap_len=overlap_len, desired_len=desired_len) for k, v in fasta_dict.items()}
 
     fasta_file_output = []
@@ -121,6 +135,7 @@ def fasta_cleaner(input_fasta, output_fasta=None, wrong_bases="n"):
     fasta_dict = fasta2dict(input_fasta)
     fasta_cleaned = {}
 
+
     for k, v in fasta_dict.items():
         for n, item in enumerate(v):
             if wrong_bases not in item[-1]:
@@ -130,7 +145,10 @@ def fasta_cleaner(input_fasta, output_fasta=None, wrong_bases="n"):
                     fasta_cleaned[k] = []
                     fasta_cleaned[k].append(item)
 
-    dict2fasta(fasta_cleaned)
+    if output_fasta == None:
+        dict2fasta(fasta_cleaned)
+    else:
+        dict2fasta(fasta_cleaned, output_fasta)
 
 
 def pep_fasta(input_fasta, output_fasta=None):

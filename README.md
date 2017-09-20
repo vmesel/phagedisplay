@@ -4,6 +4,7 @@ Para o desenvolvimento de um pipeline de sequências das sequencias a serem util
 
 O pipeline inteiro é:
 ```bash
+sed "s/\*$//" ORIGINAL-FASTAFILE.FASTA > PRE_FASTAFILE.fasta
 sed "s/|.*//" ORIGINAL-FASTAFILE.FASTA > PRE_FASTAFILE.fasta
 pyfasta split -n 1 -k 52 -o 7 FASTAFILE.fasta
 sed "s/\([0-9]\)_\(-\?[0-9]\)/\1\|\2/g" PRE_FASTAFILE.fasta > FASTAFILE.fasta

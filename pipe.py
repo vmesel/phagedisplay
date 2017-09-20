@@ -3,38 +3,33 @@ import os
 
 from fasta_normalizer import *
 
-# parser = argparse.ArgumentParser(description='Fasta line length normalizer')
-#
-# parser.add_argument('-r','--run',
-#                     dest='run',
-#                     action="store_true"
-# )
-#
-# parser.add_argument('-f','--file',
-#                     dest='file',
-# )
-#
-# if __name__ == "__main__":
-#     args = parser.parse_args()
-#     if args.run:
-#         fasta_one_liner(args.file, "schisto1.fasta")
-#         os.system("sed -e 's/\*$//g' schisto1.fasta")
+parser = argparse.ArgumentParser(description='Fasta line length normalizer')
 
-def fasta2dict(fasta_file):
-    fasta_list = [line.strip() for line in open(fasta_file) if line.strip() != ""]
-    fasta_dict = {}
-    fasta_seq_names = [fasta_list[i].replace(">","") for i in range(0, len(fasta_list), 2)]
-    fasta_sequences = [fasta_list[i] for i in range(1, len(fasta_list), 2)]
+parser.add_argument('-r','--run',
+                    dest='run',
+                    action="store_true"
+)
 
-    for k, v in zip(fasta_seq_names, fasta_sequences):
-        fasta_dict[k] = v
+parser.add_argument('-f','--file',
+                    dest='file',
+)
 
-    return fasta_dict
+parser.add_argument('-s','--size',
+                    dest='size',
+)
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+    if args.run:
+        wd = os.getcwd() + "/"
+        fasta_one_liner(wd + args.file, "schisto1.fasta")
+        os.system("sed -e 's/\*$//g' {wd}schisto1.fasta > {wd}schisto2.fasta".format(wd=wd))
+        os.system("sed -e 's/:pep$//g' {wd}schisto2.fasta > {wd}schisto3.fasta".format(wd=wd))
+        os.system("pyfasta split {wd}schisto3.fasta -n 1 -k {k} -o 7".format(wd=wd, k=args.size))
+        seq_name_norm("{wd}schisto3.split.{s}mer.7overlap.fasta".format(wd=wd, s=args.size), "{wd}schisto4.fasta".format(wd=wd))
+        fasta_normalizer(file="{wd}schisto4.fasta".format(wd=wd), desired_len=args.size, overlap_len=7, output_file = "{wd}schisto5.fasta".format(wd=wd))
+        fasta_cleaner(input_fasta="{wd}schisto5.fasta".format(wd=wd), output_fasta= "{wd}schisto6.fasta".format(wd=wd), wrong_bases="X")
 
 
-fastadict = fasta2dict("../schisto2.fasta")
 
-for k, v in fastadict.items():
-    a = {"+": v.count("+"), "#": v.count("#")}
-    if sum(a.values()) >= 2:
-        print(">{}\n{}\n".format(k,v))
+
