@@ -238,3 +238,6 @@ ENV/
 /site
 
 # End of https://www.gitignore.io/api/pydev,python,pycharm,pycharm+iml,pycharm+all
+files/
+*.fasta
+*.fa*

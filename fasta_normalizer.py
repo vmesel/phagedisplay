@@ -40,24 +40,33 @@ parser.add_argument('-ol','--one-liner',
 )
 
 
-def fasta2dict(fasta_file):
-    fasta_list = [line.strip() for line in open(fasta_file) if line.strip() != ""]
+def fasta2dict(fasta_file, pyfastalib=True):
     fasta_dict = {}
-    fasta_seq_names = [fasta_list[i].replace(">","") for i in range(0, len(fasta_list), 2)]
-    fasta_sequences = [fasta_list[i] for i in range(1, len(fasta_list), 2)]
 
-    for k, v in zip(fasta_seq_names, fasta_sequences):
-        splited_seq_name = k.split("|")
-        seq_name = splited_seq_name[0]
-        seq_pos = splited_seq_name[1]
-        if seq_name in fasta_dict:
-            fasta_dict[seq_name].append((int(seq_pos), v))
-        else:
-            fasta_dict[seq_name] = []
-            fasta_dict[seq_name].append((int(seq_pos), v))
+    if pyfastalib:
+        fasta_list = [line.strip() for line in open(fasta_file) if line.strip() != ""]
+        fasta_seq_names = [fasta_list[i].replace(">","") for i in range(0, len(fasta_list), 2)]
+        fasta_sequences = [fasta_list[i] for i in range(1, len(fasta_list), 2)]
 
-    for k in fasta_dict.keys():
-        fasta_dict[k] = sorted(fasta_dict[k])
+        for k, v in zip(fasta_seq_names, fasta_sequences):
+            try:
+                splited_seq_name = k.split("|")
+                seq_name = splited_seq_name[0]
+                seq_pos = splited_seq_name[1]
+                if seq_name in fasta_dict:
+                    fasta_dict[seq_name].append((int(seq_pos), v))
+                else:
+                    fasta_dict[seq_name] = []
+                    fasta_dict[seq_name].append((int(seq_pos), v))
+            except:
+                print(k)
+
+        for k in fasta_dict.keys():
+            fasta_dict[k] = sorted(fasta_dict[k])
+
+    else:
+        fasta = SeqIO.to_dict(SeqIO.parse(fasta_file, format="fasta"))
+        fasta_dict = {k:str(v.seq) for k, v in fasta.items()}
 
     return fasta_dict
 
@@ -82,14 +91,12 @@ def fasta_one_liner(fasta, output_fasta=None):
     fasta = SeqIO.to_dict(SeqIO.parse(fasta, format="fasta"))
     one_liner_fasta = {}
     for k, v in fasta.items():
-        # import ipdb; ipdb.set_trace()
         one_liner_fasta[k] = str(v.seq)
     dict2fasta(one_liner_fasta, output_fasta)
 
 
 def seq_name_norm(fasta_to_clean, output_fasta=None):
     import re
-    from collections import OrderedDict
     fasta = SeqIO.to_dict(SeqIO.parse(fasta_to_clean, format="fasta"))
     fasta_clean = {}
 
@@ -99,30 +106,44 @@ def seq_name_norm(fasta_to_clean, output_fasta=None):
 
     dict2fasta(fasta_clean, output_fasta)
 
-def list_normalizer(list, overlap_len, desired_len):
-    if len(list) > 1:
-        normalized_list = [x for x in list[:-2]]
-        seq_complete = list[-2][1]
-        seq_incomplete = list[-1][1]
-        if len(seq_incomplete) >= int(overlap_len):
+def list_normalizer(sortinglist, overlap_len, desired_len, k=None):
+    sorted_list = sorted(sortinglist, key=lambda tup: tup[0])
+    normalized_list = []
+    if len(sorted_list) > 1:
+        normalized_list = [x for x in sorted_list[:-2]]
+        seq_complete = sorted_list[-2][1]
+        seq_incomplete = sorted_list[-1][1]
+        if len(seq_incomplete) > int(overlap_len):
             if len(seq_incomplete) < int(desired_len):
                 missing_len = int(desired_len) - len(seq_incomplete)
-                normalized_list.append((list[-2][0], list[-2][1]))
+                normalized_list.append((sorted_list[-2][0], sorted_list[-2][1]))
                 seq_incomplete = seq_complete[-missing_len - overlap_len:-int(overlap_len)] + seq_incomplete
-                normalized_list.append((int(list[-1][0]) + missing_len, seq_incomplete))
+                normalized_list.append((int(sorted_list[-1][0]), seq_incomplete))
+            elif len(seq_incomplete) == int(desired_len):
+                normalized_list.append((int(sorted_list[-1][0]), seq_incomplete))
+            else:
+                raise ValueError("Alguma parte do script com erro")
         return normalized_list
-    return list
+    else:
+        for k in sortinglist:
+           if len(k[1]) == desired_len:
+               normalized_list.append((int(sortinglist[-1][0]), sortinglist[-1][1]))
+    return normalized_list
 
 
 def fasta_normalizer(file, desired_len, overlap_len, output_file = None):
     fasta_dict = fasta2dict(file)
-    new_fasta = {k: list_normalizer(v, overlap_len=overlap_len, desired_len=desired_len) for k, v in fasta_dict.items()}
+    new_fasta = {k: list_normalizer(v, overlap_len=overlap_len, desired_len=desired_len, k=k) for k, v in fasta_dict.items()}
 
     fasta_file_output = []
+    estranhos = 0
     for k, v in new_fasta.items():
         for ind, seq in v:
             if len(seq) == int(desired_len):
                 fasta_file_output.append(">{}|{}\n{}\n".format(k, ind, seq))
+            else:
+                estranhos += 1
+    # print("{} sequencias removidas por estarem fora dos padroes".format(estranhos))
 
     if output_file != None:
         with open(output_file, "w+") as f:
@@ -132,18 +153,11 @@ def fasta_normalizer(file, desired_len, overlap_len, output_file = None):
 
 
 def fasta_cleaner(input_fasta, output_fasta=None, wrong_bases="n"):
-    fasta_dict = fasta2dict(input_fasta)
+    fasta_dict = fasta2dict(input_fasta, pyfastalib=False)
     fasta_cleaned = {}
 
-
     for k, v in fasta_dict.items():
-        for n, item in enumerate(v):
-            if wrong_bases not in item[-1]:
-                if k in fasta_cleaned:
-                    fasta_cleaned[k].append(item)
-                else:
-                    fasta_cleaned[k] = []
-                    fasta_cleaned[k].append(item)
+        fasta_cleaned[k] = v.replace(wrong_bases, "")
 
     if output_fasta == None:
         dict2fasta(fasta_cleaned)
