@@ -3,7 +3,6 @@ import argparse
 from Bio import SeqIO, Seq
 from Bio.Alphabet import generic_dna
 from Bio.Data.CodonTable import TranslationError
-from pprint import pprint
 
 parser = argparse.ArgumentParser(description='Fasta line length normalizer')
 
@@ -106,7 +105,7 @@ def seq_name_norm(fasta_to_clean, output_fasta=None):
 
     dict2fasta(fasta_clean, output_fasta)
 
-def list_normalizer(sortinglist, overlap_len, desired_len, k=None):
+def list_normalizer(sortinglist, overlap_len, desired_len):
     sorted_list = sorted(sortinglist, key=lambda tup: tup[0])
     normalized_list = []
     if len(sorted_list) > 1:
@@ -117,12 +116,14 @@ def list_normalizer(sortinglist, overlap_len, desired_len, k=None):
             if len(seq_incomplete) < int(desired_len):
                 missing_len = int(desired_len) - len(seq_incomplete)
                 normalized_list.append((sorted_list[-2][0], sorted_list[-2][1]))
-                seq_incomplete = seq_complete[-missing_len - overlap_len:-int(overlap_len)] + seq_incomplete
+                seq_incomplete = seq_complete[-int(missing_len) - int(overlap_len):-int(overlap_len)] + seq_incomplete
                 normalized_list.append((int(sorted_list[-1][0]), seq_incomplete))
             elif len(seq_incomplete) == int(desired_len):
                 normalized_list.append((int(sorted_list[-1][0]), seq_incomplete))
             else:
                 raise ValueError("Alguma parte do script com erro")
+        else:
+            normalized_list = [x for x in sorted_list[:-1]]
         return normalized_list
     else:
         for k in sortinglist:
@@ -133,7 +134,7 @@ def list_normalizer(sortinglist, overlap_len, desired_len, k=None):
 
 def fasta_normalizer(file, desired_len, overlap_len, output_file = None):
     fasta_dict = fasta2dict(file)
-    new_fasta = {k: list_normalizer(v, overlap_len=overlap_len, desired_len=desired_len, k=k) for k, v in fasta_dict.items()}
+    new_fasta = {k: list_normalizer(v, overlap_len=overlap_len, desired_len=desired_len) for k, v in fasta_dict.items()}
 
     fasta_file_output = []
     estranhos = 0
