@@ -28,30 +28,30 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.run:
         wd = os.getcwd() + "/"
-        fasta_one_liner(wd + args.file, "schisto1.fasta")
-        os.system("echo 'SCHISTO1' && cat {wd}schisto1.fasta | grep '>' | wc -l".format(wd=wd))
-        os.system("sed -e 's/\*$//g' {wd}schisto1.fasta > {wd}schisto2.fasta".format(wd=wd)) # REMOVE STOP CODONS
-        os.system("echo 'SCHISTO2' && cat {wd}schisto2.fasta | grep '>' | wc -l".format(wd=wd))
-        os.system("sed -e 's/:pep$//g' {wd}schisto2.fasta > {wd}schisto3.fasta".format(wd=wd)) # LIMPA NOME DA SEQUENCIA
-        os.system("echo 'SCHISTO3' && cat {wd}schisto3.fasta | grep '>' | wc -l".format(wd=wd))
-        fasta_cleaner(input_fasta="{wd}schisto3.fasta".format(wd=wd), output_fasta= "{wd}schisto4.fasta".format(wd=wd), wrong_bases="X") # LIMPA A SEQUENCIA
-        os.system("echo 'SCHISTO4' && cat {wd}schisto4.fasta | grep '>' | wc -l".format(wd=wd))
-        fasta_translation_ecoli(fasta_file="{}schisto4.fasta".format(wd), output_file="{}schisto5.fasta".format(wd)) # TRADUZ PARA E. COLI
-        os.system("pyfasta split {wd}schisto5.fasta -n 1 -k {k} -o 21".format(wd=wd, k=args.size))
-        os.system("echo 'SCHISTO5 splitted' && cat {wd}schisto5.split.{s}mer.{o}overlap.fasta | grep '>' | wc -l".format(wd=wd, s=args.size, o=args.overlap))
-        seq_name_norm("{wd}schisto5.split.{s}mer.{o}overlap.fasta".format(wd=wd, s=args.size, o=args.overlap), "{wd}schisto6.fasta".format(wd=wd))
-        os.system("echo 'SCHISTO6' && cat {wd}schisto6.fasta | grep '>' | wc -l".format(wd=wd))
-        fasta_normalizer(file="{wd}schisto6.fasta".format(wd=wd), desired_len=args.size, overlap_len=args.overlap, output_file = "{wd}schisto7.fasta".format(wd=wd))
-        os.system("echo 'SCHISTO7' && cat {wd}schisto7.fasta | grep '>' | wc -l".format(wd=wd))
-        call_cross_match("{wd}schisto7.fasta".format(wd=wd), "nco1", "{wd}schisto8_nco1.fasta".format(wd=wd))
-        print("SCHISTO8 - NCO1")
-        call_cross_match("{wd}schisto8_nco1.fasta".format(wd=wd), "pst1", "{wd}schisto8_nco1_pst1.fasta".format(wd=wd))
-        print("SCHISTO8 - NCO1 COM PST1")
-        call_cross_match("{wd}schisto8_nco1_pst1.fasta".format(wd=wd), "ecor5", "{wd}schisto8_nco1_pst1_ecor5.fasta".format(wd=wd))
-        print("SCHISTO8 - NCO1, PST1 COM ECOR5")
+        # fasta_one_liner(wd + args.file, "schisto1.fasta")
+        # os.system("echo 'SCHISTO1' && cat {wd}schisto1.fasta | grep '>' | wc -l".format(wd=wd))
+        # os.system("sed -e 's/\*$//g' {wd}schisto1.fasta > {wd}schisto2.fasta".format(wd=wd)) # REMOVE STOP CODONS
+        # os.system("echo 'SCHISTO2' && cat {wd}schisto2.fasta | grep '>' | wc -l".format(wd=wd))
+        # os.system("sed -e 's/:pep$//g' {wd}schisto2.fasta > {wd}schisto3.fasta".format(wd=wd)) # LIMPA NOME DA SEQUENCIA
+        # os.system("echo 'SCHISTO3' && cat {wd}schisto3.fasta | grep '>' | wc -l".format(wd=wd))
+        # fasta_cleaner(input_fasta="{wd}schisto3.fasta".format(wd=wd), output_fasta= "{wd}schisto4.fasta".format(wd=wd), wrong_bases="X") # LIMPA A SEQUENCIA
+        # os.system("echo 'SCHISTO4' && cat {wd}schisto4.fasta | grep '>' | wc -l".format(wd=wd))
+        # fasta_translation_ecoli(fasta_file="{}schisto4.fasta".format(wd), output_file="{}schisto5.fasta".format(wd)) # TRADUZ PARA E. COLI
+        # os.system("pyfasta split {wd}schisto5.fasta -n 1 -k {k} -o 21".format(wd=wd, k=args.size))
+        # os.system("echo 'SCHISTO5 splitted' && cat {wd}schisto5.split.{s}mer.{o}overlap.fasta | grep '>' | wc -l".format(wd=wd, s=args.size, o=args.overlap))
+        # seq_name_norm("{wd}schisto5.split.{s}mer.{o}overlap.fasta".format(wd=wd, s=args.size, o=args.overlap), "{wd}schisto6.fasta".format(wd=wd))
+        # os.system("echo 'SCHISTO6' && cat {wd}schisto6.fasta | grep '>' | wc -l".format(wd=wd))
+        # fasta_normalizer(file="{wd}schisto6.fasta".format(wd=wd), desired_len=args.size, overlap_len=args.overlap, output_file = "{wd}schisto7.fasta".format(wd=wd))
+        # os.system("echo 'SCHISTO7' && cat {wd}schisto7.fasta | grep '>' | wc -l".format(wd=wd))
+        # call_cross_match("{wd}schisto7.fasta".format(wd=wd), "nco1", "{wd}schisto8_nco1.fasta".format(wd=wd))
+        # print("SCHISTO8 - NCO1")
+        # call_cross_match("{wd}schisto8_nco1.fasta".format(wd=wd), "pst1", "{wd}schisto8_nco1_pst1.fasta".format(wd=wd))
+        # print("SCHISTO8 - NCO1 COM PST1")
+        # call_cross_match("{wd}schisto8_nco1_pst1.fasta".format(wd=wd), "ecor5", "{wd}schisto8_nco1_pst1_ecor5.fasta".format(wd=wd))
+        # print("SCHISTO8 - NCO1, PST1 COM ECOR5")
 
         # ATE AQUI EH COM O CROSS MATCH
-
+        import ipdb; ipdb.set_trace()
         call_cross_match("{wd}schisto8_nco1_pst1_ecor5.fasta".format(wd=wd), "5a", "{wd}schisto8_nco1_pst1_ecor5_5a.fasta".format(wd=wd))
         print("SCHISTO8 - NCO1, PST1, ECOR5 COM 5A")
         call_cross_match("{wd}schisto8_nco1_pst1_ecor5_5a.fasta".format(wd=wd), "5t", "{wd}schisto8_wout_motifs.fasta".format(wd=wd))
