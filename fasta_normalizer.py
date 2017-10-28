@@ -144,7 +144,6 @@ def fasta_normalizer(file, desired_len, overlap_len, output_file = None):
                 fasta_file_output.append(">{}|{}\n{}\n".format(k, ind, seq))
             else:
                 estranhos += 1
-    # print("{} sequencias removidas por estarem fora dos padroes".format(estranhos))
 
     if output_file != None:
         with open(output_file, "w+") as f:

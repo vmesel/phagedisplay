@@ -37,7 +37,7 @@ def replacer(x, rep0, rep1, rep2):
         return rep2
 
 
-def motif_replacer(seq, rep0, rep1, rep2):
+def motif_replacer(seq, rep0, rep1, rep2, restriction_site):
     sequence_wout_RS = seq.split("xxxxxx")
     sequence_to_replace = [
             replacer(x, rep0, rep1, rep2) for x in motif_frame_counter(seq)
@@ -57,7 +57,7 @@ def fasta_motif_replacer(fasta, restriction_site, output_file):
             "5t": ("ttctt", "ttttc", "tttct"),
     }
     rep0, rep1, rep2 = rs_replacing[restriction_site]
-    dict_to_fasta = {k: motif_replacer(v.lower(), rep0, rep1, rep2).upper() for k, v in fasta_to_dict.items()}
+    dict_to_fasta = {k: motif_replacer(v.lower(), rep0, rep1, rep2, restriction_site).upper() for k, v in fasta_to_dict.items()}
     dict2fasta(dict_to_fasta, output_fasta=output_file)
 
 def call_cross_match(seq_file, restriction_site, output_fasta):
@@ -76,13 +76,10 @@ def call_cross_match(seq_file, restriction_site, output_fasta):
         fasta_one_liner(to_one_liner[0], to_one_liner[1])
         fasta_motif_replacer(to_one_liner[1], restriction_site, output_fasta)
     else:
-        of = seq_file + ".pre_screen"
-        # if restriction_site == "5a":
-        #     os.system("sed 's/AAAAA/XXXXX/g' {inf} > {of}".format(inf=seq_file, of=of))
-        # elif restriction_site == "5t":
-        #     os.system("sed 's/TTTTT/XXXXX/g' {inf} > {of}".format(inf=seq_file, of=of))
-        motif_runner = "/home/elton/bioinformatics-tools/phredPhrapConsed/phrap/cross_match.manyreads {sf} {mf}  -minmatch 5 -screen".format(sf=of, mf=motif_file)
-        to_one_liner = (of + ".screen", of + ".one_liner")
-        os.system(motif_runner)
-        fasta_one_liner(to_one_liner[0], to_one_liner[1])
-        fasta_motif_replacer(to_one_liner[1], restriction_site, output_fasta)
+        of = seq_file + ".screen"
+        if restriction_site == "5a":
+            os.system("sed 's/AAAAA/XXXXXX/g' {inf} > {of}".format(inf=seq_file, of=of))
+        elif restriction_site == "5t":
+            os.system("sed 's/TTTTT/XXXXXX/g' {inf} > {of}".format(inf=seq_file, of=of))
+        to_one_liner = (of, seq_file + ".one_liner")
+        fasta_motif_replacer(to_one_liner[0], restriction_site, output_fasta)
